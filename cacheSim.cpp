@@ -13,6 +13,37 @@ using std::endl;
 using std::cerr;
 using std::ifstream;
 using std::stringstream;
+// main data struct 
+class mem {
+	cache L1;
+	cache L2;
+	int mem_cyc;
+	bool wr_alloc;
+}
+
+// for l1 and l2 
+class cache {
+	int BSize;
+	int way_num;
+	int DSize;
+	
+public:
+	cacheSim(int Bsize, int way_num, int DSize);
+	~cacheSim();
+};
+
+cacheSim::cacheSim(int Bsize, int way_num, int DSize) : 
+	Bsize=Bsize, 
+	way_num=way_num, 
+	DSize=DSize {
+
+}
+
+cacheSim::~cacheSim()
+{
+}
+
+
 
 int main(int argc, char **argv) {
 
@@ -106,5 +137,6 @@ int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 }
 
 int setCalc(string cutAddress, int block_num_per_set) {
-	return block_num_per_set;
+	
 }
+
