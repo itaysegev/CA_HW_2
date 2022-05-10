@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <math.h>
 
 using std::FILE;
 using std::string;
@@ -98,4 +99,12 @@ int main(int argc, char **argv) {
 	printf("AccTimeAvg=%.03f\n", avgAccTime);
 
 	return 0;
+}
+
+int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
+	return std::pow(DSize - BSize, 2.0);
+}
+
+int setCalc(string cutAddress, int block_num_per_set) {
+	return block_num_per_set;
 }
