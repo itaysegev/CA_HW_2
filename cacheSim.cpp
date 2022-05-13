@@ -161,8 +161,9 @@ int main(int argc, char **argv) {
 		num = strtoul(cutAddress.c_str(), NULL, 16);
 
 		// DEBUG - remove this line
-		cout << " (set) " << setCalc(cutAddress, L1Assoc) << endl;
-		cout << " (tag) " << tagCalc(cutAddress, L1Assoc) << endl;
+		string a = "00000004";
+		cout << " (set) " << setCalc(a, L1Assoc) << endl;
+		cout << " (tag) " << tagCalc(a, L1Assoc) << endl;
 		
 
 	}
