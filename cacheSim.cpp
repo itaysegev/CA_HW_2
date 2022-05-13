@@ -14,12 +14,12 @@ using std::cerr;
 using std::ifstream;
 using std::stringstream;
 // main data struct 
-class mem {
-	cache L1;
-	cache L2;
-	int mem_cyc;
-	bool wr_alloc;
-};
+// class mem {
+// 	cache L1;
+// 	cache L2;
+// 	int mem_cyc;
+// 	bool wr_alloc;
+// };
 
 class Line {
 public:
@@ -52,6 +52,17 @@ public:
 // }
 
 
+inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
+	return pow(DSize - BSize, 2.0);
+}
+
+int setCalc(string cutAddress, int sets_num) {
+	return 1;
+}
+
+inline int setsNumCalc(int blocks_num, int assoc) {
+	return blocks_num/pow(assoc, 2);
+}
 
 int main(int argc, char **argv) {
 
@@ -143,16 +154,5 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
-	return pow(DSize - BSize, 2.0);
-}
-
-int setCalc(string cutAddress, int sets_num) {
-	return 1;
-}
-
-inline int setsNumCalc(int blocks_num, int assoc) {
-	return blocks_num/pow(assoc, 2);
-}
 
 
