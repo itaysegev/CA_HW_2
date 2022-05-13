@@ -53,7 +53,7 @@ public:
 
 
 inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
-	return pow(DSize - BSize, 2.0);
+	return pow(2, DSize - BSize);
 }
 
 int setCalc(string cutAddress, int sets_num) {
@@ -61,7 +61,7 @@ int setCalc(string cutAddress, int sets_num) {
 }
 
 inline int setsNumCalc(int blocks_num, int assoc) {
-	return blocks_num/pow(assoc, 2);
+	return blocks_num/pow(2, assoc);
 }
 
 int main(int argc, char **argv) {
@@ -113,9 +113,11 @@ int main(int argc, char **argv) {
 		}
 	}
 	int blocks_num = blocksNumCalc(BSize, L1Size);
+	int ways_num = pow(2, L1Assoc);
 	int sets_num = setsNumCalc(blocks_num, L1Assoc);
 	cout << "blocks nums: " << blocks_num;
 	cout << "sets num: " << sets_num;
+	cout << "ways num: " << ways_num;
 	while (getline(file, line)) {
 
 		stringstream ss(line);
