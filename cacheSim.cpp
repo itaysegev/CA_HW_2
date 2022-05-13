@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <bitset>
 #include <math.h>
 
 using std::FILE;
@@ -13,6 +14,7 @@ using std::endl;
 using std::cerr;
 using std::ifstream;
 using std::stringstream;
+using namespace std;
 // main data struct 
 // class mem {
 // 	cache L1;
@@ -51,6 +53,14 @@ public:
 // {
 // }
 
+string hexToBin(string hex_str) {
+    stringstream ss;
+    ss << hex << hex_str;
+    unsigned n;
+    ss >> n;
+    bitset<32> b(n);
+    return b.to_string();
+}
 
 inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 	return pow(2, DSize - BSize);
@@ -136,9 +146,9 @@ int main(int argc, char **argv) {
 
 		// DEBUG - remove this line
 		cout << ", address (hex)" << cutAddress;
-
+		cout << ", binary: " << hexToBin(cutAddress);
 		unsigned long int num = 0;
-		num = strtoul(cutAddress.c_str(), NULL, 2);
+		num = strtoul(cutAddress.c_str(), NULL, 16);
 
 		// DEBUG - remove this line
 		cout << " (dec) " << num << endl;
