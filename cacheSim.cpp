@@ -66,8 +66,17 @@ inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 	return pow(2, DSize - BSize);
 }
 
-int setCalc(int dec_address, int sets_num) {
-	
+int setCalc(string hex_address, int assoc) {
+	string bin_address = hexToBin(hex_address);
+	string set_bin = bin_address.substr(2, assoc);
+	return stoi(set_bin, 0, 2); 
+}
+
+
+int tagCalc(string hex_address, int assoc) {
+	string bin_address = hexToBin(hex_address);
+	string set_bin = bin_address.substr(2 + assoc);
+	return stoi(set_bin, 0, 2); 
 }
 
 inline int setsNumCalc(int blocks_num, int assoc) {
@@ -146,12 +155,13 @@ int main(int argc, char **argv) {
 
 		// DEBUG - remove this line
 		cout << ", address (hex)" << cutAddress;
-		cout << ", binary: " << hexToBin(cutAddress);
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
 
 		// DEBUG - remove this line
-		cout << " (dec) " << num << endl;
+		cout << " (set) " << setCalc(cutAddress, L1Assoc) << endl;
+		cout << " (tag) " << tagCalc(cutAddress, L1Assoc) << endl;
+		
 
 	}
 
