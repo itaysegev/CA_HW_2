@@ -19,29 +19,37 @@ class mem {
 	cache L2;
 	int mem_cyc;
 	bool wr_alloc;
-}
-
-// for l1 and l2 
-class cache {
-	int BSize;
-	int way_num;
-	int DSize;
-	
-public:
-	cacheSim(int Bsize, int way_num, int DSize);
-	~cacheSim();
 };
 
-cacheSim::cacheSim(int Bsize, int way_num, int DSize) : 
-	Bsize=Bsize, 
-	way_num=way_num, 
-	DSize=DSize {
+class Line {
+public:
+	int tag;
+};
 
-}
+// // for l1 and l2 
+// class cache {
+// 	int BSize;
+// 	int set_num;
+// 	int way_num;
+// 	int DSize;
+	
+// public:
+// 	Line[set_num][way_num];
+// 	cache(int Bsize, int way_num, int DSize, int set_num);
+// 	~cache();
+// };
 
-cacheSim::~cacheSim()
-{
-}
+// cache::cache(int Bsize, int way_num, int DSize, int set_num) : 
+// 	Bsize=Bsize,
+// 	set_num=set_num, 
+// 	way_num=way_num, 
+// 	DSize=DSize {
+
+// }
+
+// cache::~cache()
+// {
+// }
 
 
 
@@ -132,11 +140,16 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
+inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 	return std::pow(DSize - BSize, 2.0);
 }
 
-int setCalc(string cutAddress, int block_num_per_set) {
-	
+int setCalc(string cutAddress, int sets_num) {
+	return 1;
 }
+
+inline int setsNumCalc(int blocks_num, int ways_num) {
+	return blocks_num/ways_num;
+}
+
 
