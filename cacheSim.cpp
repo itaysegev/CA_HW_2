@@ -101,7 +101,10 @@ int main(int argc, char **argv) {
 			return 0;
 		}
 	}
-
+	int blocks_num = blocksNumCalc(BSize, L1Size);
+	int sets_num = setsNumCalc(blocks_num, L1Assoc);
+	cout << "blocks nums: " << blocks_num;
+	cout << "sets num: " << sets_num;
 	while (getline(file, line)) {
 
 		stringstream ss(line);
@@ -141,15 +144,15 @@ int main(int argc, char **argv) {
 }
 
 inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
-	return std::pow(DSize - BSize, 2.0);
+	return pow(DSize - BSize, 2.0);
 }
 
 int setCalc(string cutAddress, int sets_num) {
 	return 1;
 }
 
-inline int setsNumCalc(int blocks_num, int ways_num) {
-	return blocks_num/ways_num;
+inline int setsNumCalc(int blocks_num, int assoc) {
+	return blocks_num/pow(assoc, 2);
 }
 
 
