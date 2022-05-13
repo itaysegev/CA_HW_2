@@ -56,8 +56,8 @@ inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 	return pow(2, DSize - BSize);
 }
 
-int setCalc(string cutAddress, int sets_num) {
-	return 1;
+int setCalc(int dec_address, int sets_num) {
+	
 }
 
 inline int setsNumCalc(int blocks_num, int assoc) {
@@ -115,9 +115,9 @@ int main(int argc, char **argv) {
 	int blocks_num = blocksNumCalc(BSize, L1Size);
 	int ways_num = pow(2, L1Assoc);
 	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-	cout << "blocks nums: " << blocks_num;
-	cout << "sets num: " << sets_num;
-	cout << "ways num: " << ways_num;
+	// cout << "blocks nums: " << blocks_num;
+	// cout << "sets num: " << sets_num;
+	// cout << "ways num: " << ways_num;
 	while (getline(file, line)) {
 
 		stringstream ss(line);
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress;
 
 		unsigned long int num = 0;
-		num = strtoul(cutAddress.c_str(), NULL, 16);
+		num = strtoul(cutAddress.c_str(), NULL, 2);
 
 		// DEBUG - remove this line
 		cout << " (dec) " << num << endl;
