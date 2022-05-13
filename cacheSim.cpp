@@ -70,14 +70,14 @@ inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 int setCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
 	string set_bin = bin_address.substr(2, assoc);
-	return stoi(set_bin, 0, 2); 
+	return std::stoi(set_bin, 0, 2); 
 }
 
 
 int tagCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
 	string set_bin = bin_address.substr(2 + assoc);
-	return stoi(set_bin, 0, 2); 
+	return std::stoi(set_bin, 0, 2); 
 }
 
 inline int setsNumCalc(int blocks_num, int assoc) {
