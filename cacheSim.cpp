@@ -70,7 +70,7 @@ inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 int setCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
 	string set_bin = bin_address.substr(2, assoc);
-	cout << "AAAA" << set_bin << endl;
+	cout << set_bin << endl;
 	return strtoul(set_bin.c_str(), NULL, 2); 
 }
 
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 		string cutAddress = address.substr(2); // Removing the "0x" part of the address
 
 		// DEBUG - remove this line
-		cout << ", address (hex)" << cutAddress;
+		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
 
