@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <bitset>
+#include <string>
 #include <math.h>
 
 using std::FILE;
