@@ -124,11 +124,11 @@ public:
 		int blocks_num = blocksNumCalc(BSize, L1Size);
 		int ways_num = pow(2, L1Assoc);
 		int sets_num = setsNumCalc(blocks_num, L1Assoc);
-		L1(BSize, ways_num, L1Size, sets_num);
+		L1 = cache(BSize, ways_num, L1Size, sets_num);
 		blocks_num = blocksNumCalc(BSize, L2Size);
 		ways_num = pow(2, L2Assoc);
 		sets_num = setsNumCalc(blocks_num, L2Assoc);
-		L2(BSize, ways_num, L2Size, sets_num);
+		L2 = cache(BSize, ways_num, L2Size, sets_num);
 	}
 	~Mem() = default;
 	void read();
