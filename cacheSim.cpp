@@ -69,16 +69,14 @@ inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 
 int setCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
-	cout << bin_address << endl;
-	string set_bin = bin_address.substr(bin_address.length() -3 , assoc);
-	cout << set_bin << endl;
+	string set_bin = bin_address.substr(bin_address.length() -3 , assoc * -1);
 	return strtoul(set_bin.c_str(), NULL, 2); 
 }
 
 
 int tagCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
-	string tag_bin = bin_address.substr(2 + assoc);
+	string tag_bin = bin_address.substr(bin_address.length() - (3 + assoc));
 	return strtoul(tag_bin.c_str(), NULL, 2); 
 }
 
