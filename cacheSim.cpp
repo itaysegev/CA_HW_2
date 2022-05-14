@@ -115,8 +115,7 @@ public:
 	int wr_alloc;
 	int l1_cyc;
 	int l2_cyc;
-	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
-			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) {
+	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc, unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) {
 		mem_cyc = MemCyc;
 		wr_alloc = WrAlloc;
 		l1_cyc = L1Cyc;
