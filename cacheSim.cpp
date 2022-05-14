@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include<algorithm>
 #include <bitset>
 #include <string>
 #include <math.h>
@@ -70,7 +71,8 @@ inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 int setCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
 	cout << bin_address << endl;
-	string set_bin = bin_address.substr(bin_address.length() -3 , -2);
+	reverse(bin_address.begin(), bin_address.end());
+	string set_bin = bin_address.substr(2, assoc);
 	cout << set_bin << endl;
 	return strtoul(set_bin.c_str(), NULL, 2); 
 }
