@@ -70,10 +70,9 @@ inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 
 int setCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
-	cout << bin_address << endl;
 	reverse(bin_address.begin(), bin_address.end());
 	string set_bin = bin_address.substr(2, assoc);
-	cout << set_bin << endl;
+	reverse(set_bin.begin(), set_bin.end());
 	return strtoul(set_bin.c_str(), NULL, 2); 
 }
 
@@ -81,7 +80,6 @@ int setCalc(string hex_address, int assoc) {
 int tagCalc(string hex_address, int assoc) {
 	string bin_address = hexToBin(hex_address);
 	string tag_bin = bin_address.substr(0, bin_address.length() - (3 + assoc));
-	cout << tag_bin << endl;
 	return strtoul(tag_bin.c_str(), NULL, 2); 
 }
 
@@ -163,12 +161,10 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
-
+		cout << " (set) " << setCalc(cutAddress, L1Assoc) << endl;
+		cout << " (tag) " << tagCalc(cutAddress, L1Assoc) << endl;
 		// DEBUG - remove this line
 	}
-		string a = "00000004";
-		cout << " (set) " << setCalc(a, 2) << endl;
-		cout << " (tag) " << tagCalc(a, 2) << endl;
 		
 
 	double L1MissRate;
