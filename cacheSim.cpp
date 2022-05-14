@@ -21,20 +21,24 @@ using namespace std;
 // main data struct 
 class Mem {
 	class cache {
-	int BSize;
-	int sets_num;
-	int ways_num;
-	int DSize;
-	queue<int> LRU_by_way_index;
-
-public:
-	Line** table;
-	cache(int Bsize, int way_num, int DSize, int set_num);
-	~cache();
-	void insert(int tag, int way, int set, bool wr_allocate);
-	void printTable();
-};
-
+		class Line {
+		public:
+			int tag;
+			bool valid;
+			bool dirty;
+		};
+		int BSize;
+		int sets_num;
+		int ways_num;
+		int DSize;
+		queue<int> LRU_by_way_index;
+	public:
+		Line** table;
+		cache(int Bsize, int way_num, int DSize, int set_num);
+		~cache();
+		void insert(int tag, int way, int set, bool wr_allocate);
+		void printTable();
+	};
 public:
 	cache L1;
 	cache L2;
@@ -62,14 +66,9 @@ unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAl
 	L2(BSize, ways_num, L2Size, sets_num);
 }
 
-class Line {
-public:
-	int tag;
-	bool valid;
-	bool dirty;
-};
 
-cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
+
+Mem::cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
 	BSize=Sblock;
 	sets_num=sets_number; 
 	ways_num=ways_number; 
@@ -86,14 +85,14 @@ cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
 }
 
 
-cache::~cache() {
+Mem::cache::~cache() {
 	for(int i = 0; i < sets_num; ++i) {
 		delete table[i];
 	}
 	delete table;
 }
 
-void cache::printTable() {
+void Mem::cache::printTable() {
 	for (int i = 0; i < sets_num; ++i) {
 		for(int j = 0; j < ways_num; ++j) {
 			cout << "way: " << j << endl;
