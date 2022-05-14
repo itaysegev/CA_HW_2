@@ -19,32 +19,27 @@ using std::ifstream;
 using std::stringstream;
 using namespace std;
 // main data struct 
-class Mem {
-public:
-	cache L1;
-	cache L2;
-	int mem_cyc;
-	bool wr_alloc;
-	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
-			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc);
-	~Mem() = default;
-	void read();
-	void write();
-};
+inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
+	return pow(2, DSize - BSize);
+}
 
-Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
-unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
-{
-	mem_cyc = MemCyc;
-	wr_alloc = WrAlloc;
-	int blocks_num = blocksNumCalc(BSize, L1Size);
-	int ways_num = pow(2, L1Assoc);
-	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-	L1(BSize, ways_num, L1Size, sets_num);
-	blocks_num = blocksNumCalc(BSize, L2Size);
-	ways_num = pow(2, L2Assoc);
-	sets_num = setsNumCalc(blocks_num, L2Assoc);
-	L2(BSize, ways_num, L2Size, sets_num);
+int setCalc(string hex_address, int assoc) {
+	string bin_address = hexToBin(hex_address);
+	reverse(bin_address.begin(), bin_address.end());
+	string set_bin = bin_address.substr(2, assoc);
+	reverse(set_bin.begin(), set_bin.end());
+	return strtoul(set_bin.c_str(), NULL, 2); 
+}
+
+
+int tagCalc(string hex_address, int assoc) {
+	string bin_address = hexToBin(hex_address);
+	string tag_bin = bin_address.substr(0, bin_address.length() - (3 + assoc));
+	return strtoul(tag_bin.c_str(), NULL, 2); 
+}
+
+inline int setsNumCalc(int blocks_num, int assoc) {
+	return blocks_num/pow(2, assoc);
 }
 
 class Line {
@@ -109,6 +104,34 @@ void cache::printTable() {
 
 }
 
+class Mem {
+public:
+	cache L1;
+	cache L2;
+	int mem_cyc;
+	bool wr_alloc;
+	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
+			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc);
+	~Mem() = default;
+	void read();
+	void write();
+};
+
+Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
+unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
+{
+	mem_cyc = MemCyc;
+	wr_alloc = WrAlloc;
+	int blocks_num = blocksNumCalc(BSize, L1Size);
+	int ways_num = pow(2, L1Assoc);
+	int sets_num = setsNumCalc(blocks_num, L1Assoc);
+	L1(BSize, ways_num, L1Size, sets_num);
+	blocks_num = blocksNumCalc(BSize, L2Size);
+	ways_num = pow(2, L2Assoc);
+	sets_num = setsNumCalc(blocks_num, L2Assoc);
+	L2(BSize, ways_num, L2Size, sets_num);
+}
+
 string hexToBin(string hex_str) {
     stringstream ss;
     ss << hex << hex_str;
@@ -118,28 +141,6 @@ string hexToBin(string hex_str) {
     return b.to_string();
 }
 
-inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
-	return pow(2, DSize - BSize);
-}
-
-int setCalc(string hex_address, int assoc) {
-	string bin_address = hexToBin(hex_address);
-	reverse(bin_address.begin(), bin_address.end());
-	string set_bin = bin_address.substr(2, assoc);
-	reverse(set_bin.begin(), set_bin.end());
-	return strtoul(set_bin.c_str(), NULL, 2); 
-}
-
-
-int tagCalc(string hex_address, int assoc) {
-	string bin_address = hexToBin(hex_address);
-	string tag_bin = bin_address.substr(0, bin_address.length() - (3 + assoc));
-	return strtoul(tag_bin.c_str(), NULL, 2); 
-}
-
-inline int setsNumCalc(int blocks_num, int assoc) {
-	return blocks_num/pow(2, assoc);
-}
 
 int main(int argc, char **argv) {
 
