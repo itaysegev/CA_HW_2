@@ -67,6 +67,7 @@ class Mem {
 		int sets_num;
 		int ways_num;
 		int DSize;
+
 		queue<int> LRU_by_way_index;
 	public:
 		Line** table;
@@ -111,11 +112,15 @@ public:
 	cache L1;
 	cache L2;
 	int mem_cyc;
-	bool wr_alloc;
+	int wr_alloc;
+	int l1_cyc;
+	int l2_cyc;
 	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
 			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) {
 		mem_cyc = MemCyc;
 		wr_alloc = WrAlloc;
+		l1_cyc = L1Cyc;
+		l2_cyc = L2Cyc;
 		int blocks_num = blocksNumCalc(BSize, L1Size);
 		int ways_num = pow(2, L1Assoc);
 		int sets_num = setsNumCalc(blocks_num, L1Assoc);
