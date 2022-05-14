@@ -20,46 +20,7 @@ using std::stringstream;
 using namespace std;
 // main data struct 
 class Mem {
-public:
-	cache L1;
-	cache L2;
-	int mem_cyc;
-	bool wr_alloc;
-	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
-			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc);
-	~Mem();
-	void read();
-	void write();
-};
-
-Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
-unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
-{
-	mem_cyc = MemCyc;
-	wr_alloc = WrAlloc;
-	int blocks_num = blocksNumCalc(BSize, L1Size);
-	int ways_num = pow(2, L1Assoc);
-	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-	L1 = new cache(BSize, ways_num, L1Size, sets_num);
-	blocks_num = blocksNumCalc(BSize, L2Size);
-	ways_num = pow(2, L2Assoc);
-	sets_num = setsNumCalc(blocks_num, L2Assoc);
-	L2 = new cache(BSize, ways_num, L2Size, sets_num);
-}
-
-Mem::~Mem() {
-	delete L1;
-	delete L2;
-}
-class Line {
-public:
-	int tag;
-	bool valid;
-	bool dirty;
-};
-
-// for l1 and l2 
-class cache {
+	class cache {
 	int BSize;
 	int sets_num;
 	int ways_num;
@@ -72,6 +33,40 @@ public:
 	~cache();
 	void insert(int tag, int way, int set, bool wr_allocate);
 	void printTable();
+};
+
+public:
+	cache L1;
+	cache L2;
+	int mem_cyc;
+	bool wr_alloc;
+	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
+			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc);
+	~Mem() = default;
+	void read();
+	void write();
+};
+
+Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
+unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
+{
+	mem_cyc = MemCyc;
+	wr_alloc = WrAlloc;
+	int blocks_num = blocksNumCalc(BSize, L1Size);
+	int ways_num = pow(2, L1Assoc);
+	int sets_num = setsNumCalc(blocks_num, L1Assoc);
+	L1(BSize, ways_num, L1Size, sets_num);
+	blocks_num = blocksNumCalc(BSize, L2Size);
+	ways_num = pow(2, L2Assoc);
+	sets_num = setsNumCalc(blocks_num, L2Assoc);
+	L2(BSize, ways_num, L2Size, sets_num);
+}
+
+class Line {
+public:
+	int tag;
+	bool valid;
+	bool dirty;
 };
 
 cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
