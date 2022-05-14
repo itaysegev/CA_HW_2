@@ -18,93 +18,6 @@ using std::cerr;
 using std::ifstream;
 using std::stringstream;
 using namespace std;
-// main data struct 
-class Mem {
-	class cache {
-		class Line {
-		public:
-			int tag;
-			bool valid;
-			bool dirty;
-		};
-		int BSize;
-		int sets_num;
-		int ways_num;
-		int DSize;
-		queue<int> LRU_by_way_index;
-	public:
-		Line** table;
-		cache(int Bsize, int way_num, int DSize, int set_num);
-		~cache();
-		void insert(int tag, int way, int set, bool wr_allocate);
-		void printTable();
-	};
-public:
-	cache L1;
-	cache L2;
-	int mem_cyc;
-	bool wr_alloc;
-	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
-			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc);
-	~Mem() = default;
-	void read();
-	void write();
-};
-
-Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
-unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
-{
-	mem_cyc = MemCyc;
-	wr_alloc = WrAlloc;
-	int blocks_num = blocksNumCalc(BSize, L1Size);
-	int ways_num = pow(2, L1Assoc);
-	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-	L1(BSize, ways_num, L1Size, sets_num);
-	blocks_num = blocksNumCalc(BSize, L2Size);
-	ways_num = pow(2, L2Assoc);
-	sets_num = setsNumCalc(blocks_num, L2Assoc);
-	L2(BSize, ways_num, L2Size, sets_num);
-}
-
-
-
-Mem::cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
-	BSize=Sblock;
-	sets_num=sets_number; 
-	ways_num=ways_number; 
-	DSize=Sdata;
-	table = new Line*[sets_num];
-	for(int i = 0; i < sets_num; ++i) {
-		table[i] = new Line[ways_num];
-	}
-	for(int i = 0; i < sets_num; ++i) {
-		for(int j = 0; j < ways_num; ++j) {
-			table[i][j].valid = false;
-		}
-	}
-}
-
-
-Mem::cache::~cache() {
-	for(int i = 0; i < sets_num; ++i) {
-		delete table[i];
-	}
-	delete table;
-}
-
-void Mem::cache::printTable() {
-	for (int i = 0; i < sets_num; ++i) {
-		for(int j = 0; j < ways_num; ++j) {
-			cout << "way: " << j << endl;
-			cout << "set: " << i << endl;
-			if(table[i][j].valid){
-				cout << table[i][j].tag << endl;
-			}
-			cout << "invalid" << endl;
-		}
-	} 
-
-}
 
 string hexToBin(string hex_str) {
     stringstream ss;
@@ -114,6 +27,7 @@ string hexToBin(string hex_str) {
     bitset<32> b(n);
     return b.to_string();
 }
+
 
 inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 	return pow(2, DSize - BSize);
@@ -137,6 +51,139 @@ int tagCalc(string hex_address, int assoc) {
 inline int setsNumCalc(int blocks_num, int assoc) {
 	return blocks_num/pow(2, assoc);
 }
+
+
+
+// main data struct 
+class Mem {
+	class cache {
+		class Line {
+		public:
+			int tag;
+			bool valid;
+			bool dirty;
+		};
+		int BSize;
+		int sets_num;
+		int ways_num;
+		int DSize;
+		queue<int> LRU_by_way_index;
+	public:
+		Line** table;
+		cache(int Sblock, int ways_number, int Sdata, int sets_number) {
+			BSize=Sblock;
+			sets_num=sets_number; 
+			ways_num=ways_number; 
+			DSize=Sdata;
+			table = new Line*[sets_num];
+			for(int i = 0; i < sets_num; ++i) {
+				table[i] = new Line[ways_num];
+			}
+			for(int i = 0; i < sets_num; ++i) {
+				for(int j = 0; j < ways_num; ++j) {
+					table[i][j].valid = false;
+				}
+			}
+		}
+		~cache() {
+			for(int i = 0; i < sets_num; ++i) {
+				delete table[i];
+			}
+			delete table;
+		}
+		void insert(int tag, int way, int set, bool wr_allocate);
+		void printTable() {
+			for (int i = 0; i < sets_num; ++i) {
+				for(int j = 0; j < ways_num; ++j) {
+					cout << "way: " << j << endl;
+					cout << "set: " << i << endl;
+					if(table[i][j].valid){
+						cout << table[i][j].tag << endl;
+					}
+					else {
+						cout << "invalid" << endl;
+					}
+				}
+			}
+		}
+	};
+public:
+	cache L1;
+	cache L2;
+	int mem_cyc;
+	bool wr_alloc;
+	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
+			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) {
+		mem_cyc = MemCyc;
+		wr_alloc = WrAlloc;
+		int blocks_num = blocksNumCalc(BSize, L1Size);
+		int ways_num = pow(2, L1Assoc);
+		int sets_num = setsNumCalc(blocks_num, L1Assoc);
+		L1(BSize, ways_num, L1Size, sets_num);
+		blocks_num = blocksNumCalc(BSize, L2Size);
+		ways_num = pow(2, L2Assoc);
+		sets_num = setsNumCalc(blocks_num, L2Assoc);
+		L2(BSize, ways_num, L2Size, sets_num);
+	}
+	~Mem() = default;
+	void read();
+	void write();
+};
+
+// Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
+// unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
+// {
+// 	mem_cyc = MemCyc;
+// 	wr_alloc = WrAlloc;
+// 	int blocks_num = blocksNumCalc(BSize, L1Size);
+// 	int ways_num = pow(2, L1Assoc);
+// 	int sets_num = setsNumCalc(blocks_num, L1Assoc);
+// 	L1(BSize, ways_num, L1Size, sets_num);
+// 	blocks_num = blocksNumCalc(BSize, L2Size);
+// 	ways_num = pow(2, L2Assoc);
+// 	sets_num = setsNumCalc(blocks_num, L2Assoc);
+// 	L2(BSize, ways_num, L2Size, sets_num);
+// }
+
+
+
+// Mem::cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
+// 	BSize=Sblock;
+// 	sets_num=sets_number; 
+// 	ways_num=ways_number; 
+// 	DSize=Sdata;
+// 	table = new Line*[sets_num];
+// 	for(int i = 0; i < sets_num; ++i) {
+// 		table[i] = new Line[ways_num];
+// 	}
+// 	for(int i = 0; i < sets_num; ++i) {
+// 		for(int j = 0; j < ways_num; ++j) {
+// 			table[i][j].valid = false;
+// 		}
+// 	}
+// }
+
+
+// Mem::cache::~cache() {
+// 	for(int i = 0; i < sets_num; ++i) {
+// 		delete table[i];
+// 	}
+// 	delete table;
+// }
+
+// void Mem::cache::printTable() {
+// 	for (int i = 0; i < sets_num; ++i) {
+// 		for(int j = 0; j < ways_num; ++j) {
+// 			cout << "way: " << j << endl;
+// 			cout << "set: " << i << endl;
+// 			if(table[i][j].valid){
+// 				cout << table[i][j].tag << endl;
+// 			}
+// 			cout << "invalid" << endl;
+// 		}
+// 	} 
+
+// }
 
 int main(int argc, char **argv) {
 
