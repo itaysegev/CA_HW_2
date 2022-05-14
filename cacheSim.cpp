@@ -115,20 +115,29 @@ public:
 	int wr_alloc;
 	int l1_cyc;
 	int l2_cyc;
-	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc, unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) {
-		mem_cyc = MemCyc;
-		wr_alloc = WrAlloc;
-		l1_cyc = L1Cyc;
-		l2_cyc = L2Cyc;
-		int blocks_num = blocksNumCalc(BSize, L1Size);
-		int ways_num = pow(2, L1Assoc);
-		int sets_num = setsNumCalc(blocks_num, L1Assoc);
-		L1 = cache(BSize, ways_num, L1Size, sets_num);
-		blocks_num = blocksNumCalc(BSize, L2Size);
-		ways_num = pow(2, L2Assoc);
-		sets_num = setsNumCalc(blocks_num, L2Assoc);
-		L2 = cache(BSize, ways_num, L2Size, sets_num);
-	}
+	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size,
+	 unsigned L2Size, unsigned L1Assoc, unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc)
+	  : mem_cyc(MemCyc),
+	  wr_alloc(WrAlloc),
+	  l1_cyc(L1Cyc),
+	  l2_cyc(L2Cyc),
+	  L1(BSize, pow(2, L1Assoc), L1Size,setsNumCalc(blocksNumCalc(BSize, L1Size), L1Assoc)),
+	  L2(BSize, pow(2, L2Assoc), L2Size,setsNumCalc(blocksNumCalc(BSize, L2Size), L2Assoc))
+	  {}
+	//   {
+	// 	mem_cyc = MemCyc;
+	// 	wr_alloc = WrAlloc;
+	// 	l1_cyc = L1Cyc;
+	// 	l2_cyc = L2Cyc;
+	// 	int blocks_num = blocksNumCalc(BSize, L1Size);
+	// 	int ways_num = pow(2, L1Assoc);
+	// 	int sets_num = setsNumCalc(blocks_num, L1Assoc);
+	// 	L1 = cache(BSize, ways_num, L1Size, sets_num);
+	// 	blocks_num = blocksNumCalc(BSize, L2Size);
+	// 	ways_num = pow(2, L2Assoc);
+	// 	sets_num = setsNumCalc(blocks_num, L2Assoc);
+	// 	L2 = cache(BSize, ways_num, L2Size, sets_num);
+	// }
 	~Mem() = default;
 	void read();
 	void write();
