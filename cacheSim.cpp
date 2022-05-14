@@ -27,7 +27,7 @@ public:
 	bool wr_alloc;
 	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
 			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc);
-	~Mem() = default;
+	~Mem();
 	void read();
 	void write();
 };
@@ -40,13 +40,17 @@ unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAl
 	int blocks_num = blocksNumCalc(BSize, L1Size);
 	int ways_num = pow(2, L1Assoc);
 	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-	L1(BSize, ways_num, L1Size, sets_num);
+	L1 = new cache(BSize, ways_num, L1Size, sets_num);
 	blocks_num = blocksNumCalc(BSize, L2Size);
 	ways_num = pow(2, L2Assoc);
 	sets_num = setsNumCalc(blocks_num, L2Assoc);
-	L2(BSize, ways_num, L2Size, sets_num);
+	L2 = new cache(BSize, ways_num, L2Size, sets_num);
 }
 
+Mem::~Mem() {
+	delete L1;
+	delete L2;
+}
 class Line {
 public:
 	int tag;
