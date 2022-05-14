@@ -4,7 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include<algorithm>
+#include <algorithm>
+#include <queue>
 #include <bitset>
 #include <string>
 #include <math.h>
@@ -18,42 +19,95 @@ using std::ifstream;
 using std::stringstream;
 using namespace std;
 // main data struct 
-// class mem {
-// 	cache L1;
-// 	cache L2;
-// 	int mem_cyc;
-// 	bool wr_alloc;
-// };
+class Mem {
+public:
+	cache L1;
+	cache L2;
+	int mem_cyc;
+	bool wr_alloc;
+	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, unsigned L1Assoc,
+			unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc);
+	~Mem() = default;
+	void read();
+	void write();
+};
+
+Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
+unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
+{
+	mem_cyc = MemCyc;
+	wr_alloc = WrAlloc;
+	int blocks_num = blocksNumCalc(BSize, L1Size);
+	int ways_num = pow(2, L1Assoc);
+	int sets_num = setsNumCalc(blocks_num, L1Assoc);
+	L1(BSize, ways_num, L1Size, sets_num);
+	blocks_num = blocksNumCalc(BSize, L2Size);
+	ways_num = pow(2, L2Assoc);
+	sets_num = setsNumCalc(blocks_num, L2Assoc);
+	L2(BSize, ways_num, L2Size, sets_num);
+}
 
 class Line {
 public:
 	int tag;
+	bool valid;
+	bool dirty;
 };
 
-// // for l1 and l2 
-// class cache {
-// 	int BSize;
-// 	int set_num;
-// 	int way_num;
-// 	int DSize;
+// for l1 and l2 
+class cache {
+	int BSize;
+	int sets_num;
+	int ways_num;
+	int DSize;
+	queue<int> LRU_by_way_index;
+
 	
-// public:
-// 	Line[set_num][way_num];
-// 	cache(int Bsize, int way_num, int DSize, int set_num);
-// 	~cache();
-// };
+public:
+	Line** table;
+	cache(int Bsize, int way_num, int DSize, int set_num);
+	~cache();
+	void insert(int tag, int way, int set, bool wr_allocate);
+	void printTable();
+};
 
-// cache::cache(int Bsize, int way_num, int DSize, int set_num) : 
-// 	Bsize=Bsize,
-// 	set_num=set_num, 
-// 	way_num=way_num, 
-// 	DSize=DSize {
+cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
+	BSize=Sblock;
+	sets_num=sets_number; 
+	ways_num=ways_number; 
+	DSize=Sdata;
+	table = new Line*[sets_num];
+	for(int i = 0; i < sets_num; ++i) {
+		table[i] = new Line[ways_num];
+	}
+	for(int i = 0; i < sets_num; ++i) {
+		for(int j = 0; j < ways_num; ++j) {
+			table[i][j].valid = false;
+		}
+	}
+}
 
-// }
 
-// cache::~cache()
-// {
-// }
+cache::~cache() {
+	for(int i = 0; i < sets_num; ++i) {
+		delete table[i];
+	}
+	delete table;
+}
+
+void cache::printTable() {
+	for (int i = 0; i < sets_num; ++i) {
+		for(int j = 0; j < ways_num; ++j) {
+			cout << "way: " << j << endl;
+			cout << "set: " << i << endl;
+			if(table[i][j].valid){
+				cout << table[i][j].tag << endl;
+			}
+			cout << "invalid" << endl;
+		}
+	} 
+
+}
 
 string hexToBin(string hex_str) {
     stringstream ss;
@@ -135,12 +189,10 @@ int main(int argc, char **argv) {
 			return 0;
 		}
 	}
-	int blocks_num = blocksNumCalc(BSize, L1Size);
-	int ways_num = pow(2, L1Assoc);
-	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-	// cout << "blocks nums: " << blocks_num;
-	// cout << "sets num: " << sets_num;
-	// cout << "ways num: " << ways_num;
+	
+	Mem mem(MemCyc, BSize, L1Size, L2Size, L1Assoc,
+			L2Assoc, L1Cyc, L2Cyc, WrAlloc);
+
 	while (getline(file, line)) {
 
 		stringstream ss(line);
@@ -161,8 +213,8 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
-		cout << " (set) " << setCalc(cutAddress, L1Assoc) << endl;
-		cout << " (tag) " << tagCalc(cutAddress, L1Assoc) << endl;
+		// cout << " (set) " << setCalc(cutAddress, L1Assoc) << endl;
+		// cout << " (tag) " << tagCalc(cutAddress, L1Assoc) << endl;
 		// DEBUG - remove this line
 	}
 		
