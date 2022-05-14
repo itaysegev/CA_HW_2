@@ -18,7 +18,7 @@ using std::cerr;
 using std::ifstream;
 using std::stringstream;
 using namespace std;
-
+// converts hexdecimal to binary 
 string hexToBin(string hex_str) {
     stringstream ss;
     ss << hex << hex_str;
@@ -28,7 +28,7 @@ string hexToBin(string hex_str) {
     return b.to_string();
 }
 
-
+// calculate blocks nubmer
 inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 	return pow(2, DSize - BSize);
 }
@@ -48,13 +48,14 @@ int tagCalc(string hex_address, int assoc) {
 	return strtoul(tag_bin.c_str(), NULL, 2); 
 }
 
+// calculate sets number - shape of cache table
 inline int setsNumCalc(int blocks_num, int assoc) {
 	return blocks_num/pow(2, assoc);
 }
 
 
 
-// main data struct 
+// main data struct which includes l1 l2 and relevent data for both caches
 class Mem {
 	class cache {
 		class Line {
@@ -63,14 +64,14 @@ class Mem {
 			bool valid;
 			bool dirty;
 		};
-		int BSize;
+		int BSize; // block size
 		int sets_num;
 		int ways_num;
-		int DSize;
-
+		int DSize; // cache data size
+		// queue sorted by last used way index for LRU protocol
 		queue<int> LRU_by_way_index;
 	public:
-		Line** table;
+		Line** table; // 2D array set X way for data
 		cache(int Sblock, int ways_number, int Sdata, int sets_number) {
 			BSize=Sblock;
 			sets_num=sets_number; 
@@ -92,7 +93,9 @@ class Mem {
 			}
 			delete table;
 		}
+		// need to implement according to wr allocate
 		void insert(int tag, int way, int set, bool wr_allocate);
+		// function for DEBUG only 
 		void printTable() {
 			for (int i = 0; i < sets_num; ++i) {
 				for(int j = 0; j < ways_num; ++j) {
@@ -124,79 +127,10 @@ public:
 	  L1(BSize, pow(2, L1Assoc), L1Size,setsNumCalc(blocksNumCalc(BSize, L1Size), L1Assoc)),
 	  L2(BSize, pow(2, L2Assoc), L2Size,setsNumCalc(blocksNumCalc(BSize, L2Size), L2Assoc))
 	  {}
-	//   {
-	// 	mem_cyc = MemCyc;
-	// 	wr_alloc = WrAlloc;
-	// 	l1_cyc = L1Cyc;
-	// 	l2_cyc = L2Cyc;
-	// 	int blocks_num = blocksNumCalc(BSize, L1Size);
-	// 	int ways_num = pow(2, L1Assoc);
-	// 	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-	// 	L1 = cache(BSize, ways_num, L1Size, sets_num);
-	// 	blocks_num = blocksNumCalc(BSize, L2Size);
-	// 	ways_num = pow(2, L2Assoc);
-	// 	sets_num = setsNumCalc(blocks_num, L2Assoc);
-	// 	L2 = cache(BSize, ways_num, L2Size, sets_num);
-	// }
 	~Mem() = default;
 	void read();
 	void write();
 };
-
-// Mem::Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size, unsigned L2Size, 
-// unsigned L1Assoc,unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc) 
-// {
-// 	mem_cyc = MemCyc;
-// 	wr_alloc = WrAlloc;
-// 	int blocks_num = blocksNumCalc(BSize, L1Size);
-// 	int ways_num = pow(2, L1Assoc);
-// 	int sets_num = setsNumCalc(blocks_num, L1Assoc);
-// 	L1(BSize, ways_num, L1Size, sets_num);
-// 	blocks_num = blocksNumCalc(BSize, L2Size);
-// 	ways_num = pow(2, L2Assoc);
-// 	sets_num = setsNumCalc(blocks_num, L2Assoc);
-// 	L2(BSize, ways_num, L2Size, sets_num);
-// }
-
-
-
-// Mem::cache::cache(int Sblock, int ways_number, int Sdata, int sets_number) {
-// 	BSize=Sblock;
-// 	sets_num=sets_number; 
-// 	ways_num=ways_number; 
-// 	DSize=Sdata;
-// 	table = new Line*[sets_num];
-// 	for(int i = 0; i < sets_num; ++i) {
-// 		table[i] = new Line[ways_num];
-// 	}
-// 	for(int i = 0; i < sets_num; ++i) {
-// 		for(int j = 0; j < ways_num; ++j) {
-// 			table[i][j].valid = false;
-// 		}
-// 	}
-// }
-
-
-// Mem::cache::~cache() {
-// 	for(int i = 0; i < sets_num; ++i) {
-// 		delete table[i];
-// 	}
-// 	delete table;
-// }
-
-// void Mem::cache::printTable() {
-// 	for (int i = 0; i < sets_num; ++i) {
-// 		for(int j = 0; j < ways_num; ++j) {
-// 			cout << "way: " << j << endl;
-// 			cout << "set: " << i << endl;
-// 			if(table[i][j].valid){
-// 				cout << table[i][j].tag << endl;
-// 			}
-// 			cout << "invalid" << endl;
-// 		}
-// 	} 
-
-// }
 
 int main(int argc, char **argv) {
 
@@ -251,7 +185,6 @@ int main(int argc, char **argv) {
 			L2Assoc, L1Cyc, L2Cyc, WrAlloc);
 
 	while (getline(file, line)) {
-
 		stringstream ss(line);
 		string address;
 		char operation = 0; // read (R) or write (W)
@@ -270,12 +203,7 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
-		// cout << " (set) " << setCalc(cutAddress, L1Assoc) << endl;
-		// cout << " (tag) " << tagCalc(cutAddress, L1Assoc) << endl;
-		// DEBUG - remove this line
 	}
-		
-
 	double L1MissRate;
 	double L2MissRate;
 	double avgAccTime;
