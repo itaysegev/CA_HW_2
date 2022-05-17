@@ -94,8 +94,19 @@ class Mem {
 			delete table;
 		}
 		// need to implement according to wr allocate
-		void insert(int tag, int way, int set, bool wr_allocate);
-		// function for DEBUG only 
+		void insert(string cut_address, bool wr_allocate);
+		 // search if is it hit or a miss in the cache 
+		bool search(string cut_address){
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			for(int i = 0; i < ways_num; ++i) {
+				if(table[curr_set][i] == curr_tag) {
+					return true;
+				}
+			}
+			return false;
+		}
+		// function for DEBUG only
 		void printTable() {
 			for (int i = 0; i < sets_num; ++i) {
 				for(int j = 0; j < ways_num; ++j) {
@@ -128,7 +139,27 @@ public:
 	  L2(BSize, pow(2, L2Assoc), L2Size,setsNumCalc(blocksNumCalc(BSize, L2Size), L2Assoc))
 	  {}
 	~Mem() = default;
-	void read();
+	void read(string cut_address) {
+		//L1 hit
+		if(L1.search(cut_address)) {
+			///update stats
+			return;
+		}
+		//L1 miss
+		else {
+			//L2 hit
+			if(L2.search(cut_address)) {
+				//update stats not include the insert action
+				L1.insert(cut_address, wr_alloc);
+				return;
+			}
+			//L2 miss
+			else {
+				cout << "data is not in the cache" << endl;
+			}
+		}
+
+	}
 	void write();
 };
 
