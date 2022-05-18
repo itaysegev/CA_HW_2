@@ -312,15 +312,15 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
-		// if(strcmp(operation, "W")) {
-		// 	mem.read(cutAddress);
-		// }
-		// else {
-		// 	mem.write(cutAddress);
-		// }
-		// // for DEBUG only
-		// mem.L1.printTable();
-		// mem.L2.printTable();
+		if(strcmp(operation, "W")) {
+			mem.read(cutAddress);
+		}
+		else {
+			mem.write(cutAddress);
+		}
+		// for DEBUG only
+		mem.L1.printTable();
+		mem.L2.printTable();
 	}
 	double L1MissRate;
 	double L2MissRate;
