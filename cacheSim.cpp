@@ -18,7 +18,7 @@ using std::cerr;
 using std::ifstream;
 using std::stringstream;
 using namespace std;
-// converts hexdecimal to binary 
+// converts hexadecimal to binary 
 string hexToBin(string hex_str) {
     stringstream ss;
     ss << hex << hex_str;
@@ -28,7 +28,7 @@ string hexToBin(string hex_str) {
     return b.to_string();
 }
 
-// calculate blocks nubmer
+// calculate blocks number
 inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
 	return pow(2, DSize - BSize);
 }
@@ -94,7 +94,39 @@ class Mem {
 			delete table;
 		}
 		// need to implement according to wr allocate
-		void insert(string cut_address, bool wr_allocate);
+		int insert(string cut_address) {
+			// need to update stats
+			int old_tag = -1;
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			int curr_way = findFreeWay(curr_set);
+			if(curr_way == -1) { // no free way need to remove 
+				curr_way = LRU_by_way_index.pop;
+
+				old_tag = table[curr_set][curr_way].tag  // save old tag for WB policy - update l2 when remove from l1
+			} 
+			table[curr_set][curr_way].valid = true;
+			table[curr_set][curr_way].tag = curr_tag;
+			LRU_by_way_index.push(curr_way); // update LRU queue
+			if(table[curr_set][curr_way].dirty) { // remove dirty data 
+				return old_tag;
+			}
+			table[curr_set][curr_way].dirty = false; // new data is not dirty
+			return -1;
+		}
+
+		void write(string cut_address) {
+			// update stats
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			int curr_way;
+			for(curr_way = 0; curr_way < ways_num; curr_way++) {
+				if(table[curr_set][curr_way] == curr_tag) {
+					break;
+				}
+			}
+			table[curr_set][curr_way].dirty = true;
+		}
 		 // search if is it hit or a miss in the cache 
 		bool search(string cut_address){
 			int curr_set = setCalc(cut_address, sets_num);
@@ -105,6 +137,16 @@ class Mem {
 				}
 			}
 			return false;
+		}
+		
+		int findFreeWay(int curr_set) {
+			int i;
+			for (i = 0; i < ways_num; i++) {
+				if (!table[curr_set][i].valid) {
+					return i;
+				}
+			}
+			return -1;
 		}
 		// function for DEBUG only
 		void printTable() {
@@ -160,7 +202,43 @@ public:
 		}
 
 	}
-	void write();
+	void write(string cut_address) {
+		//L1 hit
+		int curr_way;
+		if(L1.search(cut_address)) {
+			L1.write(cut_address);
+			///update stats  
+			return;
+		}
+		//L1 miss
+		else {
+			//L2 hit
+			if(L2.search(cut_address)) {
+				//update stats not include the insert action
+				if(wr_alloc) { 
+					int old_tag = L1.insert(cut_address);
+					if(old_tag != -1) { 
+						//need to update l2 - update stats
+						old_tag = old_tag; // line for compilation only when if is empty for now
+					}
+					
+				}
+				else { // no write allocate - write to l2 only
+					L2.write(cut_address);
+				}
+			}
+			//L2 miss
+			else {
+				// first write need to insert both - inclusion principle.
+				//need to update stats
+				L1.insert(cut_address);
+				L2.insert(cut_address);
+				
+			}
+		}
+
+
+	}
 };
 
 int main(int argc, char **argv) {
@@ -234,6 +312,15 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
+		if(operation == "R") {
+			mem.read(cutAddress);
+		}
+		else {
+			mem.write(cutAddress);
+		}
+		// for DEBUG only
+		mem.L1.printTable();
+		mem.L2.printTable();
 	}
 	double L1MissRate;
 	double L2MissRate;
