@@ -103,7 +103,7 @@ class Mem {
 			if(curr_way == -1) { // no free way need to remove 
 				curr_way = LRU_by_way_index.front(); 
 				LRU_by_way_index.pop();
-				old_tag = table[curr_set][curr_way].tag  // save old tag for WB policy - update l2 when remove from l1
+				old_tag = table[curr_set][curr_way].tag;  // save old tag for WB policy - update l2 when remove from l1
 			} 
 			table[curr_set][curr_way].valid = true;
 			table[curr_set][curr_way].tag = curr_tag;
