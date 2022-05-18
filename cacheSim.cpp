@@ -192,7 +192,7 @@ public:
 			//L2 hit
 			if(L2.search(cut_address)) {
 				//update stats not include the insert action
-				L1.insert(cut_address, wr_alloc);
+				L1.insert(cut_address);
 				return;
 			}
 			//L2 miss
@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
-		if(operation == "R") {
+		if(strcmp(operation, "W")) {
 			mem.read(cutAddress);
 		}
 		else {
