@@ -101,8 +101,8 @@ class Mem {
 			int curr_tag = tagCalc(cut_address, sets_num);
 			int curr_way = findFreeWay(curr_set);
 			if(curr_way == -1) { // no free way need to remove 
-				curr_way = LRU_by_way_index.pop;
-
+				curr_way = LRU_by_way_index.front(); 
+				LRU_by_way_index.pop();
 				old_tag = table[curr_set][curr_way].tag  // save old tag for WB policy - update l2 when remove from l1
 			} 
 			table[curr_set][curr_way].valid = true;
@@ -132,7 +132,7 @@ class Mem {
 			int curr_set = setCalc(cut_address, sets_num);
 			int curr_tag = tagCalc(cut_address, sets_num);
 			for(int i = 0; i < ways_num; ++i) {
-				if(table[curr_set][i] == curr_tag) {
+				if(table[curr_set][i].tag == curr_tag) {
 					return true;
 				}
 			}
@@ -180,7 +180,7 @@ public:
 	  L1(BSize, pow(2, L1Assoc), L1Size,setsNumCalc(blocksNumCalc(BSize, L1Size), L1Assoc)),
 	  L2(BSize, pow(2, L2Assoc), L2Size,setsNumCalc(blocksNumCalc(BSize, L2Size), L2Assoc))
 	  {}
-	~Mem() = default;
+	~Mem();
 	void read(string cut_address) {
 		//L1 hit
 		if(L1.search(cut_address)) {
