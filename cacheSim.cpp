@@ -180,7 +180,7 @@ public:
 	  L1(BSize, pow(2, L1Assoc), L1Size,setsNumCalc(blocksNumCalc(BSize, L1Size), L1Assoc)),
 	  L2(BSize, pow(2, L2Assoc), L2Size,setsNumCalc(blocksNumCalc(BSize, L2Size), L2Assoc))
 	  {}
-	~Mem();
+	~Mem()= default;
 	void read(string cut_address) {
 		//L1 hit
 		if(L1.search(cut_address)) {
