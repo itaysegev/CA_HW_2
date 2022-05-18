@@ -313,7 +313,7 @@ int main(int argc, char **argv) {
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
 		char R = 'R'
-		if(operation == R)) {
+		if(operation == R) {
 			mem.read(cutAddress);
 		}
 		else {
