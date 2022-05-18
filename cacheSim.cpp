@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
 		cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
-		char R = 'R'
+		char R = 'R';
 		if(operation == R) {
 			mem.read(cutAddress);
 		}
