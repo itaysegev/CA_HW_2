@@ -121,7 +121,7 @@ class Mem {
 			int curr_tag = tagCalc(cut_address, sets_num);
 			int curr_way;
 			for(curr_way = 0; curr_way < ways_num; curr_way++) {
-				if(table[curr_set][curr_way] == curr_tag) {
+				if(table[curr_set][curr_way].tag == curr_tag) {
 					break;
 				}
 			}
