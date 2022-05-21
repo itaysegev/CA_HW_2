@@ -434,12 +434,12 @@ int main(int argc, char **argv) {
 		}
 		// for DEBUG only
 		// mem.L1.printTable();
-		mem.L2.printTable(cutAddress);
+		// mem.L2.printTable(cutAddress);
 		// cout << "l1 miss is " << mem.l1_miss << endl;
-		cout << "l2 miss is " << mem.l2_miss << endl;
+		// cout << "l2 miss is " << mem.l2_miss << endl;
 		// cout << "l1 access is " << mem.l1_access << endl;  
-		cout << "l2 access is " << mem.l2_access << endl;
-		cout << "mem " << mem.mem_access << endl;
+		// cout << "l2 access is " << mem.l2_access << endl;
+		// cout << "mem " << mem.mem_access << endl;
 		// cout << "L2 miss " << (double)mem.l2_miss << endl;
 	}
 	double L1MissRate;
