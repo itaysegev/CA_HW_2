@@ -234,7 +234,7 @@ class Mem {
 			int curr_set = setCalc(cutAddress, sets_num);
 			int curr_tag = tagCalc(cutAddress, sets_num);
 			cout << "---------------TABLE------------------------" << endl;
-			cout << "set " << curr_set << endl;
+			cout << "num_sets " << sets_num << endl;
 			for (int i = 0; i < sets_num; ++i) {
 				for(int j = 0; j < ways_num; ++j) {
 					cout << "set: " << i << endl;
