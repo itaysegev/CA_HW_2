@@ -432,12 +432,13 @@ int main(int argc, char **argv) {
 		// for DEBUG only
 		mem.L1.printTable();
 		mem.L2.printTable();
-		cout << "l1 miss is" << mem.l1_miss << endl;
-		cout << "l2 miss is" << mem.l2_miss << endl;
-		cout << "l1 access is" << mem.l1_access << endl;  
-		cout << "l2 access is" << mem.l2_access << endl;
-		cout << "mem" << mem.mem_access << endl;
-
+		cout << "l1 miss is " << mem.l1_miss << endl;
+		cout << "l2 miss is " << mem.l2_miss << endl;
+		cout << "l1 access is " << mem.l1_access << endl;  
+		cout << "l2 access is " << mem.l2_access << endl;
+		cout << "mem " << mem.mem_access << endl;
+		double L2MissRate = (double)mem.l2_miss / (double)mem.l2_access;
+		cout << "L2 miss " << L2MissRate << endl;
 	}
 	double L1MissRate;
 	double L2MissRate;
