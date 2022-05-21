@@ -230,8 +230,11 @@ class Mem {
 		}
 
 		// function for DEBUG only
-		void printTable() {
+		void printTable(string cutAddress) {
+			int curr_set = setCalc(cutAddress, sets_num);
+			int curr_tag = tagCalc(cutAddress, sets_num);
 			cout << "---------------TABLE------------------------" << endl;
+			cout << "set " << curr_set << endl;
 			for (int i = 0; i < sets_num; ++i) {
 				for(int j = 0; j < ways_num; ++j) {
 					cout << "set: " << i << endl;
@@ -431,7 +434,7 @@ int main(int argc, char **argv) {
 		}
 		// for DEBUG only
 		// mem.L1.printTable();
-		mem.L2.printTable();
+		mem.L2.printTable(cutAddress);
 		// cout << "l1 miss is " << mem.l1_miss << endl;
 		cout << "l2 miss is " << mem.l2_miss << endl;
 		// cout << "l1 access is " << mem.l1_access << endl;  
