@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <queue>
+#include <list>
 #include <algorithm>
 #include <bitset>
 #include <string>
@@ -18,6 +18,7 @@ using std::cerr;
 using std::ifstream;
 using std::stringstream;
 using namespace std;
+
 // converts hexadecimal to binary 
 string hexToBin(string hex_str) {
     stringstream ss;
@@ -30,27 +31,16 @@ string hexToBin(string hex_str) {
 
 // calculate blocks number
 inline int blocksNumCalc(unsigned int BSize, unsigned int DSize) {
-	return pow(2, DSize - BSize);
-}
-
-int setCalc(string hex_address, int assoc) {
-	string bin_address = hexToBin(hex_address);
-	reverse(bin_address.begin(), bin_address.end());
-	string set_bin = bin_address.substr(2, assoc);
-	reverse(set_bin.begin(), set_bin.end());
-	return strtoul(set_bin.c_str(), NULL, 2); 
+	return (int)pow(2, DSize - BSize);
 }
 
 
-int tagCalc(string hex_address, int assoc) {
-	string bin_address = hexToBin(hex_address);
-	string tag_bin = bin_address.substr(0, bin_address.length() - (3 + assoc));
-	return strtoul(tag_bin.c_str(), NULL, 2); 
-}
+
+
 
 // calculate sets number - shape of cache table
 inline int setsNumCalc(int blocks_num, int assoc) {
-	return blocks_num/pow(2, assoc);
+	return (int)(blocks_num/pow(2, assoc));
 }
 
 
@@ -58,87 +48,177 @@ inline int setsNumCalc(int blocks_num, int assoc) {
 // main data struct which includes l1 l2 and relevent data for both caches
 class Mem {
 	class cache {
-		class Line {
+		class Block {
 		public:
 			int tag;
 			bool valid;
 			bool dirty;
+			string full_adress;
+			Block() : tag(0), valid(false), dirty(true), full_adress(8, '*') {}
 		};
 		int BSize; // block size
 		int sets_num;
 		int ways_num;
 		int DSize; // cache data size
 		// queue sorted by last used way index for LRU protocol
-		queue<int> LRU_by_way_index;
+		list<int>* LRU_by_way_index;
 	public:
-		Line** table; // 2D array set X way for data
+		Block** table; // 2D array set X way for data
 		cache(int Sblock, int ways_number, int Sdata, int sets_number) {
-			BSize=Sblock;
-			sets_num=sets_number; 
-			ways_num=ways_number; 
-			DSize=Sdata;
-			table = new Line*[sets_num];
-			for(int i = 0; i < sets_num; ++i) {
-				table[i] = new Line[ways_num];
+			BSize = Sblock;
+			sets_num = sets_number;
+			ways_num = ways_number;
+			DSize = Sdata;
+			table = new Block*[sets_num];
+			for (int i = 0; i < sets_num; ++i) {
+				table[i] = new Block[ways_num];
 			}
-			for(int i = 0; i < sets_num; ++i) {
-				for(int j = 0; j < ways_num; ++j) {
-					table[i][j].valid = false;
-				}
-			}
+			LRU_by_way_index = new list<int>[sets_num];
 		}
 		~cache() {
-			for(int i = 0; i < sets_num; ++i) {
-				delete table[i];
+			
+			for (int i = 0; i < sets_num; ++i) {
+				delete[] table[i];
+				
 			}
-			delete table;
+			delete[] table;
+			delete[] LRU_by_way_index;
 		}
-		// need to implement according to wr allocate
-		int insert(string cut_address) {
-			// need to update stats
-			int old_tag = -1;
+
+		int setCalc(string hex_address, int sets_num) {
+			string bin_address = hexToBin(hex_address);
+			reverse(bin_address.begin(), bin_address.end());
+			string set_bin = bin_address.substr(BSize, log2(sets_num));
+			reverse(set_bin.begin(), set_bin.end());
+			return strtoul(set_bin.c_str(), NULL, 2);
+		}
+
+
+		int tagCalc(string hex_address, int sets_num) {
+			string bin_address = hexToBin(hex_address);
+			string tag_bin = bin_address.substr(0, 32 - BSize - log2(sets_num));
+			//cout << tag_bin << endl;
+			return strtoul(tag_bin.c_str(), NULL, 2);
+		}
+
+		// called only from l1
+		// return the address if we evicted data that was dirty and therefore need to update l2
+		void insertTOL1(string cut_address) {
 			int curr_set = setCalc(cut_address, sets_num);
 			int curr_tag = tagCalc(cut_address, sets_num);
 			int curr_way = findFreeWay(curr_set);
-			if(curr_way == -1) { // no free way need to remove 
-				curr_way = LRU_by_way_index.front(); 
-				LRU_by_way_index.pop();
-				old_tag = table[curr_set][curr_way].tag;  // save old tag for WB policy - update l2 when remove from l1
-			} 
+			if (curr_way == -1) { // no free way need to remove 
+				curr_way = LRU_by_way_index[curr_set].front();
+				LRU_by_way_index[curr_set].pop_front();
+				//if (table[curr_set][curr_way].dirty) {
+				//	return string(table[curr_set][curr_way].full_adress);  // if dirty and evicted we need to update l2
+			//	}
+			}
+			//insert new block
 			table[curr_set][curr_way].valid = true;
 			table[curr_set][curr_way].tag = curr_tag;
-			LRU_by_way_index.push(curr_way); // update LRU queue
-			if(table[curr_set][curr_way].dirty) { // remove dirty data 
-				return old_tag;
-			}
-			table[curr_set][curr_way].dirty = false; // new data is not dirty
-			return -1;
+			table[curr_set][curr_way].full_adress = cut_address;
+			table[curr_set][curr_way].dirty = false;
+			LRU_by_way_index[curr_set].remove(curr_way);
+			LRU_by_way_index[curr_set].push_back(curr_way); // update LRU queue
+
 		}
 
+
+		//called only from l2, fine a aline to evict or nullptr in case it wasn't needed.
+		// so we will be able to snoop l1 before actually evict it.
+		bool evict(string cut_address, string* evicted) {
+			bool evict = false;
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			int curr_way = findFreeWay(curr_set);
+			if (curr_way == -1) { // no free way need to remove 
+				curr_way = LRU_by_way_index[curr_set].front();
+				LRU_by_way_index[curr_set].pop_front();
+				*evicted = table[curr_set][curr_way].full_adress ;  // if dirty and evicted we need to update l2
+				table[curr_set][curr_way].valid = false;
+				 evict = true;
+			}
+
+			return evict;
+		}
+
+		// called only from l2 , after snooping l1 and knowing we have a free way for sure
+		// if we evicted line we  
+		void insertTOL2(string cut_address) {
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			int curr_way = findFreeWay(curr_set);
+			table[curr_set][curr_way].valid = true;
+			table[curr_set][curr_way].tag = curr_tag;
+			table[curr_set][curr_way].full_adress = cut_address;
+			table[curr_set][curr_way].dirty = false;
+			LRU_by_way_index[curr_set].remove(curr_way);
+			LRU_by_way_index[curr_set].push_back(curr_way); // update LRU queue
+		}
+
+
+		//this function is to write in case of dirty update.
 		void write(string cut_address) {
 			// update stats
 			int curr_set = setCalc(cut_address, sets_num);
 			int curr_tag = tagCalc(cut_address, sets_num);
 			int curr_way;
-			for(curr_way = 0; curr_way < ways_num; curr_way++) {
-				if(table[curr_set][curr_way].tag == curr_tag) {
+			for (curr_way = 0; curr_way < ways_num; curr_way++) {
+				if (table[curr_set][curr_way].tag == curr_tag && table[curr_set][curr_way].valid) {
 					break;
 				}
 			}
 			table[curr_set][curr_way].dirty = true;
 		}
-		 // search if is it hit or a miss in the cache 
-		bool search(string cut_address){
+
+
+		// search if is it hit or a miss in the cache 
+		bool search(string cut_address) {
 			int curr_set = setCalc(cut_address, sets_num);
 			int curr_tag = tagCalc(cut_address, sets_num);
-			for(int i = 0; i < ways_num; ++i) {
-				if(table[curr_set][i].tag == curr_tag) {
+			for (int i = 0; i < ways_num; ++i) {
+				if (table[curr_set][i].tag == curr_tag && table[curr_set][i].valid) {
+					LRU_by_way_index[curr_set].remove(i);
+					LRU_by_way_index[curr_set].push_back(i);
 					return true;
 				}
 			}
 			return false;
 		}
-		
+
+		//Called from L1 When L2 need to evict a block, it snoop l1 to make it invalid
+		//return true if is was dirty and so we need to make it dirty in l2
+		//in this hw we dont care if it was dirty and so we need to update l2 because it will be evicted anyway
+		bool snoop(string cut_address) {
+			bool is_dirty = false;
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			for (int i = 0; i < ways_num; ++i) {
+				if (table[curr_set][i].tag == curr_tag && table[curr_set][i].valid) {
+					//cout << "found in way num" << i << endl;
+					table[curr_set][i].valid = false; //invalidate the data
+					if (table[curr_set][i].dirty) {
+						return true; // was dirty
+					}
+
+				}
+			}
+			return false; //either not existed or was not dirty
+		}
+
+		//called from L2- when L1 need to update the dirty bit in L2
+		void dirty(string cut_address) {
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			for (int i = 0; i < ways_num; ++i) {
+				if (table[curr_set][i].tag == curr_tag && table[curr_set][i].valid) {
+					table[curr_set][i].dirty = true; //invalidate the dat
+
+				}
+			}
+		}
+  
 		int findFreeWay(int curr_set) {
 			int i;
 			for (i = 0; i < ways_num; i++) {
@@ -148,17 +228,16 @@ class Mem {
 			}
 			return -1;
 		}
+
 		// function for DEBUG only
 		void printTable() {
+			cout << "---------------TABLE------------------------" << endl;
 			for (int i = 0; i < sets_num; ++i) {
 				for(int j = 0; j < ways_num; ++j) {
-					cout << "way: " << j << endl;
 					cout << "set: " << i << endl;
+					cout << "way: " << j << endl;
 					if(table[i][j].valid){
 						cout << table[i][j].tag << endl;
-					}
-					else {
-						cout << "invalid" << endl;
 					}
 				}
 			}
@@ -171,6 +250,11 @@ public:
 	int wr_alloc;
 	int l1_cyc;
 	int l2_cyc;
+	int l1_miss;
+	int l1_access;
+	int l2_miss;
+	int l2_access;
+	int mem_access;
 	Mem(unsigned MemCyc,  unsigned BSize , unsigned L1Size,
 	 unsigned L2Size, unsigned L1Assoc, unsigned L2Assoc, unsigned L1Cyc, unsigned L2Cyc, unsigned WrAlloc)
 	  : mem_cyc(MemCyc),
@@ -178,66 +262,91 @@ public:
 	  l1_cyc(L1Cyc),
 	  l2_cyc(L2Cyc),
 	  L1(BSize, pow(2, L1Assoc), L1Size,setsNumCalc(blocksNumCalc(BSize, L1Size), L1Assoc)),
-	  L2(BSize, pow(2, L2Assoc), L2Size,setsNumCalc(blocksNumCalc(BSize, L2Size), L2Assoc))
+	  L2(BSize, pow(2, L2Assoc), L2Size,setsNumCalc(blocksNumCalc(BSize, L2Size), L2Assoc)),
+	  l1_miss(0),
+	  l1_access(0),
+	  l2_miss(0),
+	  l2_access(0),
+      mem_access(0)
 	  {}
+
+
 	~Mem()= default;
 	void read(string cut_address) {
-		//L1 hit
+		//cout << "now reading from " << cut_address << endl;
+		//try l1
+		l1_access++;
 		if(L1.search(cut_address)) {
-			///update stats
+
 			return;
 		}
-		//L1 miss
-		else {
-			//L2 hit
-			if(L2.search(cut_address)) {
-				//update stats not include the insert action
-				L1.insert(cut_address);
-				return;
-			}
-			//L2 miss
-			else {
-				cout << "data is not in the cache" << endl;
-			}
+		l1_miss++;
+		//tryl2
+		l2_access++;
+		//cout << "not in l1" << endl;
+		if (L2.search(cut_address)) {
+			L1.insertTOL1(cut_address);
+			return;
+			
 		}
-
+		//cout << "not in l2:)" << endl;
+		l2_miss++;
+		//go to Mem
+		mem_access++;
+		// update blocks in l1 and l2
+		string evicted(8, '*');
+		//cout << evicted << endl;
+		//cout << cut_address << endl;
+		bool evict = L2.evict(cut_address,&evicted);
+		//cout << "the chosen is" << evicted << endl;
+		if (evict) {
+			L1.snoop(evicted);
+		}
+		L2.insertTOL2(cut_address);
+		L1.insertTOL1(cut_address);
+		//if (dirty) {
+		//	L2.dirty(dirty);
+		//return;					  `
+		return;
 	}
+
+
+
 	void write(string cut_address) {
-		//L1 hit
-		int curr_way;
+		//try l1
+		//cout << "now writing to " << cut_address << endl;
+		l1_access++;
 		if(L1.search(cut_address)) {
-			L1.write(cut_address);
-			///update stats  
 			return;
 		}
+		//cout << "not in l1" << endl;
 		//L1 miss
-		else {
-			//L2 hit
-			if(L2.search(cut_address)) {
-				//update stats not include the insert action
-				if(wr_alloc) { 
-					int old_tag = L1.insert(cut_address);
-					if(old_tag != -1) { 
-						//need to update l2 - update stats
-						old_tag = old_tag; // line for compilation only when if is empty for now
-					}
-					
-				}
-				else { // no write allocate - write to l2 only
-					L2.write(cut_address);
-				}
+		l1_miss++;
+		//try l2
+		l2_access++;
+		if(L2.search(cut_address)) {
+			if (wr_alloc) {
+				L1.insertTOL1(cut_address);
 			}
-			//L2 miss
-			else {
-				// first write need to insert both - inclusion principle.
-				//need to update stats
-				L1.insert(cut_address);
-				L2.insert(cut_address);
-				
-			}
+			return;
 		}
-
-
+		//cout << "not in l2" << endl;
+		l2_miss++;
+		//go to mem
+		mem_access++;
+		if (wr_alloc) {
+			string evicted(8, '*');
+			//cout << evicted << endl;
+			bool evict = L2.evict(cut_address, &evicted);
+			//cout << cut_address << endl;
+			//cout << evicted << endl;
+			if (evict) {
+				L1.snoop(evicted);
+			}
+			L2.insertTOL2(cut_address);
+			L1.insertTOL1(cut_address);				  
+			return;
+		}			
 	}
 };
 
@@ -293,6 +402,7 @@ int main(int argc, char **argv) {
 	Mem mem(MemCyc, BSize, L1Size, L2Size, L1Assoc,
 			L2Assoc, L1Cyc, L2Cyc, WrAlloc);
 
+	int lines = 0;
 	while (getline(file, line)) {
 		stringstream ss(line);
 		string address;
@@ -304,15 +414,15 @@ int main(int argc, char **argv) {
 		}
 
 		// DEBUG - remove this line
-		cout << "operation: " << operation;
-
+		//cout << "operation: " << operation;
+		lines++;
 		string cutAddress = address.substr(2); // Removing the "0x" part of the address
 
 		// DEBUG - remove this line
-		cout << ", address (hex)" << cutAddress << endl;
+		//cout << ", address (hex)" << cutAddress << endl;
 		unsigned long int num = 0;
 		num = strtoul(cutAddress.c_str(), NULL, 16);
-		char R = 'R';
+		char R = 'r';
 		if(operation == R) {
 			mem.read(cutAddress);
 		}
@@ -320,12 +430,23 @@ int main(int argc, char **argv) {
 			mem.write(cutAddress);
 		}
 		// for DEBUG only
-		mem.L1.printTable();
-		mem.L2.printTable();
+		//mem.L1.printTable();
+		//mem.L2.printTable();
+		//cout << "l1 miss is" << mem.l1_miss << endl;
+		//cout << "l2 miss is" << mem.l2_miss << endl;
+		//cout << "l1 access is" << mem.l1_access << endl;  
+		//cout << "l2 access is" << mem.l2_access << endl;
+		//cout << "mem" << mem.mem_access << endl;
+
 	}
 	double L1MissRate;
 	double L2MissRate;
 	double avgAccTime;
+	//cout << "l1 miss is" << mem.l1_miss << endl;
+	//cout << "l1 access is" << mem.l1_access << endl;
+	L1MissRate = (double)mem.l1_miss / (double)mem.l1_access;
+	L2MissRate = (double)mem.l2_miss / (double)mem.l2_access;
+	avgAccTime = ((double)((mem.l1_access) * (mem.l1_cyc) + (mem.l2_access) * (mem.l2_cyc) + (mem.mem_access) * (mem.mem_cyc))) / ((double)(lines));
 
 	printf("L1miss=%.03f ", L1MissRate);
 	printf("L2miss=%.03f ", L2MissRate);
