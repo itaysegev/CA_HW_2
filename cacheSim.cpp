@@ -437,8 +437,7 @@ int main(int argc, char **argv) {
 		cout << "l1 access is " << mem.l1_access << endl;  
 		cout << "l2 access is " << mem.l2_access << endl;
 		cout << "mem " << mem.mem_access << endl;
-		double L2MissRate = (double)mem.l2_miss / (double)mem.l2_access;
-		cout << "L2 miss " << L2MissRate << endl;
+		cout << "L2 miss " << (double)mem.l2_miss << endl;
 	}
 	double L1MissRate;
 	double L2MissRate;
