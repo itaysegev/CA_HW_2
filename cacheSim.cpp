@@ -56,6 +56,7 @@ class Mem {
 			string full_adress;
 			Block() : tag(0), valid(false), dirty(true), full_adress(8, '*') {}
 		};
+
 		int BSize; // block size
 		int sets_num;
 		int ways_num;
@@ -76,13 +77,11 @@ class Mem {
 			LRU_by_way_index = new list<int>[sets_num];
 		}
 		~cache() {
-			
-			for (int i = 0; i < sets_num; ++i) {
+			for (int i = 0; i < sets_num; i++) {
 				delete[] table[i];
 				
 			}
-			delete[] table;
-			delete[] LRU_by_way_index;
+			
 		}
 
 		int setCalc(string hex_address, int sets_num) {
@@ -103,25 +102,28 @@ class Mem {
 
 		// called only from l1
 		// return the address if we evicted data that was dirty and therefore need to update l2
-		void insertTOL1(string cut_address) {
+		bool insertTOL1(string cut_address, string* update_l2) {
+			bool dirty = false;
 			int curr_set = setCalc(cut_address, sets_num);
 			int curr_tag = tagCalc(cut_address, sets_num);
 			int curr_way = findFreeWay(curr_set);
 			if (curr_way == -1) { // no free way need to remove 
 				curr_way = LRU_by_way_index[curr_set].front();
 				LRU_by_way_index[curr_set].pop_front();
-				//if (table[curr_set][curr_way].dirty) {
-				//	return string(table[curr_set][curr_way].full_adress);  // if dirty and evicted we need to update l2
-			//	}
+				if (table[curr_set][curr_way].dirty) {
+					*update_l2 =string(table[curr_set][curr_way].full_adress);  // if dirty and evicted we need to update l2
+					dirty = true;
+					
+				}
 			}
 			//insert new block
 			table[curr_set][curr_way].valid = true;
 			table[curr_set][curr_way].tag = curr_tag;
 			table[curr_set][curr_way].full_adress = cut_address;
 			table[curr_set][curr_way].dirty = false;
-			LRU_by_way_index[curr_set].remove(curr_way);
-			LRU_by_way_index[curr_set].push_back(curr_way); // update LRU queue
+			LRU_by_way_index[curr_set].push_back(curr_way);
 
+			return dirty;
 		}
 
 
@@ -153,7 +155,6 @@ class Mem {
 			table[curr_set][curr_way].tag = curr_tag;
 			table[curr_set][curr_way].full_adress = cut_address;
 			table[curr_set][curr_way].dirty = false;
-			LRU_by_way_index[curr_set].remove(curr_way);
 			LRU_by_way_index[curr_set].push_back(curr_way); // update LRU queue
 		}
 
@@ -172,6 +173,20 @@ class Mem {
 			table[curr_set][curr_way].dirty = true;
 		}
 
+		//this function is called from L2 when we evicted dirty line in L1 and so we need to make it dirty
+		void updateDirtyBit(string cut_address) {
+			int curr_set = setCalc(cut_address, sets_num);
+			int curr_tag = tagCalc(cut_address, sets_num);
+			int curr_way;
+			for (curr_way = 0; curr_way < ways_num; curr_way++) {
+				if (table[curr_set][curr_way].tag == curr_tag && table[curr_set][curr_way].valid) {
+					table[curr_set][curr_way].dirty = true;
+					LRU_by_way_index[curr_set].remove(curr_way);
+					LRU_by_way_index[curr_set].push_back(curr_way);
+					break;
+				}
+			}
+		}
 
 		// search if is it hit or a miss in the cache 
 		bool search(string cut_address) {
@@ -207,18 +222,6 @@ class Mem {
 			return false; //either not existed or was not dirty
 		}
 
-		//called from L2- when L1 need to update the dirty bit in L2
-		void dirty(string cut_address) {
-			int curr_set = setCalc(cut_address, sets_num);
-			int curr_tag = tagCalc(cut_address, sets_num);
-			for (int i = 0; i < ways_num; ++i) {
-				if (table[curr_set][i].tag == curr_tag && table[curr_set][i].valid) {
-					table[curr_set][i].dirty = true; //invalidate the dat
-
-				}
-			}
-		}
-  
 		int findFreeWay(int curr_set) {
 			int i;
 			for (i = 0; i < ways_num; i++) {
@@ -230,11 +233,8 @@ class Mem {
 		}
 
 		// function for DEBUG only
-		void printTable(string cutAddress) {
-			int curr_set = setCalc(cutAddress, sets_num);
-			int curr_tag = tagCalc(cutAddress, sets_num);
+		void printTable() {
 			cout << "---------------TABLE------------------------" << endl;
-			cout << "num_sets " << sets_num << endl;
 			for (int i = 0; i < sets_num; ++i) {
 				for(int j = 0; j < ways_num; ++j) {
 					cout << "set: " << i << endl;
@@ -246,6 +246,7 @@ class Mem {
 			}
 		}
 	};
+
 public:
 	cache L1;
 	cache L2;
@@ -273,53 +274,50 @@ public:
       mem_access(0)
 	  {}
 
-
 	~Mem()= default;
 	void read(string cut_address) {
-		//cout << "now reading from " << cut_address << endl;
+		string evicted('*', 8);
 		//try l1
 		l1_access++;
-		if(L1.search(cut_address)) {
+		if (L1.search(cut_address)) {
 
 			return;
 		}
 		l1_miss++;
-		//tryl2
 		l2_access++;
-		//cout << "not in l1" << endl;
 		if (L2.search(cut_address)) {
-			L1.insertTOL1(cut_address);
+			if (L1.insertTOL1(cut_address, &evicted)) {
+				L2.updateDirtyBit(evicted);
+			}
 			return;
-			
+
 		}
-		//cout << "not in l2:)" << endl;
 		l2_miss++;
 		//go to Mem
 		mem_access++;
 		// update blocks in l1 and l2
-		string evicted(8, '*');
-		//cout << evicted << endl;
-		//cout << cut_address << endl;
-		bool evict = L2.evict(cut_address,&evicted);
-		//cout << "the chosen is" << evicted << endl;
-		if (evict) {
+		if (L2.evict(cut_address, &evicted)) {
+		
 			L1.snoop(evicted);
 		}
 		L2.insertTOL2(cut_address);
-		L1.insertTOL1(cut_address);
-		//if (dirty) {
-		//	L2.dirty(dirty);
+	
+		if (L1.insertTOL1(cut_address, &evicted)) {;
+			L2.updateDirtyBit(evicted);
+		}
 		//return;					  `
 		return;
-	}
+	};
 
 
 
 	void write(string cut_address) {
 		//try l1
 		//cout << "now writing to " << cut_address << endl;
+		string evicted(8, '*');
 		l1_access++;
 		if(L1.search(cut_address)) {
+			L1.write(cut_address);
 			return;
 		}
 		//cout << "not in l1" << endl;
@@ -329,7 +327,11 @@ public:
 		l2_access++;
 		if(L2.search(cut_address)) {
 			if (wr_alloc) {
-				L1.insertTOL1(cut_address);
+				if (L1.insertTOL1(cut_address, &evicted)) {
+					L2.updateDirtyBit(evicted);	 //when inserting to l1 we evicted dirty line
+
+				}
+				L1.write(cut_address);
 			}
 			return;
 		}
@@ -338,16 +340,17 @@ public:
 		//go to mem
 		mem_access++;
 		if (wr_alloc) {
-			string evicted(8, '*');
 			//cout << evicted << endl;
-			bool evict = L2.evict(cut_address, &evicted);
 			//cout << cut_address << endl;
 			//cout << evicted << endl;
-			if (evict) {
+			if (L2.evict(cut_address, &evicted)) {
 				L1.snoop(evicted);
 			}
 			L2.insertTOL2(cut_address);
-			L1.insertTOL1(cut_address);				  
+			if (L1.insertTOL1(cut_address, &evicted)) {
+				L2.updateDirtyBit(evicted);
+			}
+			L1.write(cut_address); // need to update the dirty bit
 			return;
 		}			
 	}
@@ -432,21 +435,11 @@ int main(int argc, char **argv) {
 		else {
 			mem.write(cutAddress);
 		}
-		// for DEBUG only
-		// mem.L1.printTable();
-		// mem.L2.printTable(cutAddress);
-		// cout << "l1 miss is " << mem.l1_miss << endl;
-		// cout << "l2 miss is " << mem.l2_miss << endl;
-		// cout << "l1 access is " << mem.l1_access << endl;  
-		// cout << "l2 access is " << mem.l2_access << endl;
-		// cout << "mem " << mem.mem_access << endl;
-		// cout << "L2 miss " << (double)mem.l2_miss << endl;
+		
 	}
 	double L1MissRate;
 	double L2MissRate;
 	double avgAccTime;
-	//cout << "l1 miss is" << mem.l1_miss << endl;
-	//cout << "l1 access is" << mem.l1_access << endl;
 	L1MissRate = (double)mem.l1_miss / (double)mem.l1_access;
 	L2MissRate = (double)mem.l2_miss / (double)mem.l2_access;
 	avgAccTime = ((double)((mem.l1_access) * (mem.l1_cyc) + (mem.l2_access) * (mem.l2_cyc) + (mem.mem_access) * (mem.mem_cyc))) / ((double)(lines));
